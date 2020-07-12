@@ -77,7 +77,13 @@ def main():
                                                         signature['_service']['abstract']))
 
     
-    # TODO add kernel as parameter
+    # add kernel as parameter
+    parser.add_argument('--kernel',
+                        action='store',
+                        dest='kernel',
+                        default=kernel,
+                        help='kernel for notebook execution')
+    
     parser.add_argument('--output',
                                 action='store',
                                 dest='nb_target',
@@ -109,9 +115,6 @@ def main():
 
     # parse the CLI
     args = parser.parse_args()
-
-    logging.info('Using kernel {}'.format(kernel))
-
     
     # update notebook signature with values set from CLI
     for key, value in vars(args).items():
@@ -126,7 +129,8 @@ def main():
             
             # value is a folder
             parameters[key]['stac:href'] = os.path.join(value, 'catalog.json') 
-        
+            #parameters[key]['value'] = os.path.join(value, 'catalog.json') 
+            
         else:
         
             parameters[key]['value'] = value 
@@ -134,20 +138,20 @@ def main():
     signature['_parameters'] = parameters
     
     # process the notebook
-    logging.info('Process notebook')   
+    logging.info('Process notebook with: {}'.format(args.kernel))   
 
     process_notebook(notebook_path, 
                      signature, 
                      args.nb_target, 
-                     kernel)
+                     args.kernel)
     
     # copy the results produced except 
     # the run.ipynb and any *.py file used
     copytree(notebook_folder, 
-                    '.',
-                    ignore=ignore_patterns('*.py', 
-                                           '__pycache__',
-                                           os.path.basename('{{cookiecutter.notebook}}')))
+             '.',
+             ignore=ignore_patterns('*.py', 
+                                    '__pycache__',
+                                    os.path.basename('{{cookiecutter.notebook}}')))
     
     logging.info('Clean-up')
     for p in ['.ipython', '.cache']:

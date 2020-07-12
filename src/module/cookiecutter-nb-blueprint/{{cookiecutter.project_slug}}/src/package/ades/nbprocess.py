@@ -98,7 +98,6 @@ def process_notebook(nb_source, signature, nb_target='result.ipynb', kernel='env
                 key = names[0]
 
                 if not key in signature['_parameters'].keys():
-                    logging.info('key {} not in signature'.format(key))
                     continue
 
                 exec(str(cell['source'])) in globals(), locals()

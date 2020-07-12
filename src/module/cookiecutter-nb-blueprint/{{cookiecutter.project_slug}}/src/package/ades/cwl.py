@@ -68,8 +68,9 @@ def default_params(signature, scatter_on=None):
             if 'scatter' in parameters[key].keys():
 
                 if parameters[key]['scatter'] == 'True':
-
-                    defaults[key] = parameters[key]['stac:href'].split(',')
+                    
+                    defaults[key] = [ {'class': 'Directory', 'path': os.path.dirname(d)} for d in parameters[key]['stac:href'].split(',')]
+                    #defaults[key] = parameters[key]['stac:href'].split(',')
 
 
         else:
