@@ -8,33 +8,6 @@ logging.basicConfig(stream=sys.stderr,
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%dT%H:%M:%S')
 
-def log_param_update(signature, key, param_value):
-    
-    # log some information but not all of it
-    if key in ['base_dir', 'data_path', 'input_catalog', 'input_identifier', 'input_identifier_stack', 'input_reference', 'input_reference_stack']:
-      
-        msg = 'Update parameter {} with value \'{}\''.format(key, 
-                                                             param_value)
-        
-    elif signature[key]['identifier'] == '_T2Username':
-        
-        msg = 'Update parameter {} with value \'{}***\''.format(key, 
-                                                                param_value[0:3])
-
-    elif signature[key]['identifier'] == '_T2ApiKey':
-
-        msg = 'Update parameter {} with value \'{}***{}\''.format(key, 
-                                                                  param_value[0:3],
-                                                                  param_value[-3:])
-        
-    else:
-        msg = 'Update parameter {} with value \'{}\''.format(key, 
-                                                             param_value)
-
-    logging.info(msg)
-    
-    return True
-
 def get_signature_notebook(nb_source):
     # builds the notebook signature 
     

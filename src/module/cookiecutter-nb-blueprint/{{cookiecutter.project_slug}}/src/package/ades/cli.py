@@ -8,7 +8,7 @@ import ast
 import io
 import pkg_resources
 from .nbprocess import process_notebook, copytree
-from .nbsignature import get_signature_notebook, log_param_update
+from .nbsignature import get_signature_notebook
 import glob
 
 from shutil import ignore_patterns, rmtree
@@ -30,6 +30,28 @@ logging.basicConfig(stream=sys.stderr,
 
 signature = None
      
+def log_param_update(signature, key, param_value):
+    
+    # log some information but not all of it
+    if signature['_parameters'][key]['identifier'] == '_T2Username':
+        
+        msg = 'Update parameter {} with value \'{}***\''.format(key, 
+                                                                param_value[0:3])
+
+    elif signature['_parameters'][key]['identifier'] == '_T2ApiKey':
+
+        msg = 'Update parameter {} with value \'{}***{}\''.format(key, 
+                                                                  param_value[0:3],
+                                                                  param_value[-3:])
+        
+    else:
+        msg = 'Update parameter {} with value \'{}\''.format(key, 
+                                                             param_value)
+
+    logging.info(msg)
+    
+    return True
+    
 class Formatter(HelpFormatter):
 
     # use defined argument order to display usage
@@ -85,10 +107,10 @@ def main():
                         help='kernel for notebook execution')
     
     parser.add_argument('--output',
-                                action='store',
-                                dest='nb_target',
-                                default='result.ipynb',
-                                help='output notebook')
+                        action='store',
+                        dest='nb_target',
+                        default='result.ipynb',
+                        help='output notebook')
     
     if not '_parameters' in signature.keys():
         raise ValueError()
@@ -97,8 +119,8 @@ def main():
     
     for key in parameters.keys():
 
-        
         if 'allowed_values' in parameters[key].keys():
+            
             parser.add_argument('--{}'.format(key),
                                 action='store',
                                 dest=key,
@@ -118,8 +140,7 @@ def main():
     
     # update notebook signature with values set from CLI
     for key, value in vars(args).items():
-     
-        # todo check kernel and nb_target
+
         if key in ['nb_target', 'kernel']:
             continue
 
@@ -129,7 +150,6 @@ def main():
             
             # value is a folder
             parameters[key]['stac:href'] = os.path.join(value, 'catalog.json') 
-            #parameters[key]['value'] = os.path.join(value, 'catalog.json') 
             
         else:
         

@@ -189,10 +189,6 @@ def cwl(signature, executable, docker=None):
                                      'EnvVarRequirement' : {'envDef':
                                                             {'PATH' : path, 
                                                              'PREFIX': os.environ['PREFIX']}}}
-                                    
-
-    
-
 
     cwl_main['inputs'] = main_inputs
 
