@@ -95,7 +95,7 @@ def default_params(signature, scatter_on=None):
     return defaults
     
     
-def cwl(signature, executable, docker=None, requirement=''):
+def cwl(signature, executable, docker=None):
     
     cwl = dict()
     cwl['cwlVersion'] = 'v1.0'
@@ -239,9 +239,8 @@ def cwl(signature, executable, docker=None, requirement=''):
 
 @click.command()
 @click.option('--docker', '-d', default=None, help='docker image')
-@click.option('--requirement', '-r', type=(str, int), multiple=True, help='set the ResourceRequirement, e.g. ramMin, coresMin')
 @click.option('--params', is_flag=True, default=False, help='flag to print the default parameters as YAML instead of the CWL')
-def main(docker, requirement, params):
+def main(docker, params):
 
     notebook_path = pkg_resources.resource_filename(__package__.split('.')[0], '{{cookiecutter.notebook}}')
     notebook_folder = pkg_resources.resource_filename(__package__.split('.')[0], 'notebook/')
@@ -249,7 +248,7 @@ def main(docker, requirement, params):
     signature = get_signature_notebook(notebook_path)
 
     if params:
-        # TODO fix the default params
+
         yaml.dump(default_params(signature),
                   sys.stdout,
                   default_flow_style=False)
@@ -257,8 +256,7 @@ def main(docker, requirement, params):
        
         yaml.dump(cwl(signature, 
                       os.path.basename(notebook_path).replace('.ipynb', ''),
-                      docker=docker,
-                      requirement=requirement), 
+                      docker=docker), 
                   sys.stdout, 
                   default_flow_style=False)
  
