@@ -1,9 +1,5 @@
-import yaml
 import logging
-import click
-import pkg_resources
 import sys
-from .nbsignature import get_signature_notebook
 import os
 
 logging.basicConfig(stream=sys.stderr, 
@@ -233,31 +229,3 @@ def cwl(signature, executable, docker=None):
     
 
 
-@click.command()
-@click.option('--docker', '-d', default=None, help='docker image')
-@click.option('--params', is_flag=True, default=False, help='flag to print the default parameters as YAML instead of the CWL')
-def main(docker, params):
-
-    notebook_path = pkg_resources.resource_filename(__package__.split('.')[0], '{{cookiecutter.notebook}}')
-    notebook_folder = pkg_resources.resource_filename(__package__.split('.')[0], 'notebook/')
-    
-    signature = get_signature_notebook(notebook_path)
-
-    if params:
-
-        yaml.dump(default_params(signature),
-                  sys.stdout,
-                  default_flow_style=False)
-    else:
-       
-        yaml.dump(cwl(signature, 
-                      os.path.basename(notebook_path).replace('.ipynb', ''),
-                      docker=docker), 
-                  sys.stdout, 
-                  default_flow_style=False)
- 
-    sys.exit(0)
-
-if __name__ == '__main__':
-    
-    main()

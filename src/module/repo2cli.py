@@ -88,10 +88,7 @@ def main(repo_url, branch, debug):
                                                         'nbconvert', 
                                                         'pyyaml',
                                                         'lxml', 
-                                                        'click', 
-                                                        'setuptools', 
-                                                        'cioppy',
-                                                        'instac'])
+                                                        'setuptools'])
     
     
     # create a local folder to put all the files for the docker image build

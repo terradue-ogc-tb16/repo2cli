@@ -1,18 +1,17 @@
 from __future__ import absolute_import
-import os, fnmatch
+import os 
 import sys
 from argparse import ArgumentParser, HelpFormatter
-from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
-import nbformat as nbf
 import ast 
 import io
 import pkg_resources
-from .nbprocess import process_notebook, copytree
-from .nbsignature import get_signature_notebook
 import glob
-from .cwl import default_params, cwl
 from shutil import ignore_patterns, rmtree
 import yaml
+
+from .nbprocess import process_notebook, copytree
+from .nbsignature import get_signature_notebook
+from .cwl import default_params, cwl
 
 try:
     # for Python 2.7
@@ -117,13 +116,19 @@ def main():
                         action='store',
                         dest='docker',
                         default=None,
-                        help='output notebook')
+                        help='Sets the docker image for the CWL DockerRequirement')
     
     parser.add_argument('--cwl',
                         action='store_true',
                         dest='print_cwl',
                         default=False,
-                        help='output notebook')
+                        help='Prints CWL script and exits')
+    
+    parser.add_argument('--params',
+                        action='store_true',
+                        dest='print_defaults',
+                        default=False,
+                        help='Prints default parameters and exits')
     
     if not '_parameters' in signature.keys():
         raise ValueError()
@@ -160,10 +165,17 @@ def main():
                   default_flow_style=False)
         sys.exit(0)
     
+    if args.print_defaults:
+        
+        yaml.dump(default_params(signature),
+                  sys.stdout,
+                  default_flow_style=False)
+        sys.exit(0)
+    
     # update notebook signature with values set from CLI
     for key, value in vars(args).items():
 
-        if key in ['nb_target', 'kernel']:
+        if key in ['nb_target', 'kernel', 'docker', 'print_cwl', 'print_defaults']:
             continue
 
         log_param_update(signature, key, value)
