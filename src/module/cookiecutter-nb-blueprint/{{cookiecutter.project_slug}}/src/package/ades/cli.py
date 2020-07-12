@@ -10,8 +10,9 @@ import pkg_resources
 from .nbprocess import process_notebook, copytree
 from .nbsignature import get_signature_notebook
 import glob
-
+from .cwl import default_params, cwl
 from shutil import ignore_patterns, rmtree
+import yaml
 
 try:
     # for Python 2.7
@@ -112,6 +113,18 @@ def main():
                         default='result.ipynb',
                         help='output notebook')
     
+    parser.add_argument('--docker',
+                        action='store',
+                        dest='docker',
+                        default=None,
+                        help='output notebook')
+    
+    parser.add_argument('--cwl',
+                        action='store_true',
+                        dest='print_cwl',
+                        default=False,
+                        help='output notebook')
+    
     if not '_parameters' in signature.keys():
         raise ValueError()
     
@@ -137,6 +150,15 @@ def main():
 
     # parse the CLI
     args = parser.parse_args()
+    
+    if args.print_cwl:
+        
+        yaml.dump(cwl(signature, 
+                      os.path.basename(notebook_path).replace('.ipynb', ''),
+                      docker=args.docker), 
+                  sys.stdout, 
+                  default_flow_style=False)
+        sys.exit(0)
     
     # update notebook signature with values set from CLI
     for key, value in vars(args).items():
