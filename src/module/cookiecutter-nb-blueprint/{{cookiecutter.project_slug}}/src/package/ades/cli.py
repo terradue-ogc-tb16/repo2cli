@@ -73,83 +73,65 @@ def main():
     
     # create the CLI 
     parser = ArgumentParser(formatter_class=Formatter, 
-                            description='{}\n{}'.format(signature['service']['title'], 
-                                                        signature['service']['abstract']))
+                            description='{}\n{}'.format(signature['_service']['title'], 
+                                                        signature['_service']['abstract']))
 
     
+    # TODO add kernel as parameter
     parser.add_argument('--output',
                                 action='store',
                                 dest='nb_target',
                                 default='result.ipynb',
                                 help='output notebook')
     
+    if not '_parameters' in signature.keys():
+        raise ValueError()
+    
+    parameters = signature['_parameters']
+    
+    for key in parameters.keys():
 
-    for key in signature.keys():
-
-        if key in ['service']: continue
-
-        if key in ['input_catalog']:
-            
+        
+        if 'allowed_values' in parameters[key].keys():
             parser.add_argument('--{}'.format(key),
                                 action='store',
                                 dest=key,
-                                default=signature[key]['value'],
-                                help='Path to the STAC input catalog')
-            continue
-            
-        if key in ['data_path', 'base_dir']:
-            
-            parser.add_argument('--{}'.format(key),
-                                action='store',
-                                dest=key,
-                                default=signature[key]['value'],
-                                help='Folder containing the data')
-     
+                                default=parameters[key]['value'],
+                                help=parameters[key]['abstract'],
+                                choices=parameters[key]['allowed_values'].split(','))
         else:
 
-            if 'allowed_values' in signature[key].keys():
-                parser.add_argument('--{}'.format(key),
-                                    action='store',
-                                    dest=key,
-                                    default=signature[key]['value'],
-                                    help=signature[key]['abstract'],
-                                    choices=signature[key]['allowed_values'].split(','))
-            else:
-
-                parser.add_argument('--{}'.format(key),
-                                    action='store',
-                                    dest=key,
-                                    default=signature[key]['value'],
-                                    help=signature[key]['abstract'])
+            parser.add_argument('--{}'.format(key),
+                                action='store',
+                                dest=key,
+                                default=parameters[key]['value'],
+                                help=parameters[key]['abstract'])
 
     # parse the CLI
     args = parser.parse_args()
 
     logging.info('Using kernel {}'.format(kernel))
 
-    # update the data_path key (if available)
-    if 'data_path' in vars(args).keys():
-        log_param_update(signature, 'data_path', vars(args)['data_path'])        
-        signature['data_path']['value'] = vars(args)['data_path']
     
     # update notebook signature with values set from CLI
     for key, value in vars(args).items():
      
-        if key in ['nb_target', 'kernel', 'stage_in', 'data_path']:
+        # todo check kernel and nb_target
+        if key in ['nb_target', 'kernel']:
             continue
 
         log_param_update(signature, key, value)
         
-        if 'stac:collection' in signature[key].keys():
+        if 'stac:collection' in parameters[key].keys():
             
             # value is a folder
-            signature[key]['stac:href'] = os.path.join(value, 'catalog.json') 
+            parameters[key]['stac:href'] = os.path.join(value, 'catalog.json') 
         
         else:
         
-            signature[key]['value'] = value 
+            parameters[key]['value'] = value 
         
-  
+    signature['_parameters'] = parameters
     
     # process the notebook
     logging.info('Process notebook')   

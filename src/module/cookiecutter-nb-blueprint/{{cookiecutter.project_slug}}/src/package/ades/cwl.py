@@ -57,61 +57,44 @@ def default_params(signature, scatter_on=None):
     
     defaults = dict()
 
-    for key in signature.keys():
-         
-        if key in ['service']:
+    parameters = signature['_parameters']
+    
+    for key in parameters.keys():
 
-            continue
+        if 'stac:collection' in parameters[key].keys():
 
-        if key in ['input_reference']:
-             
-            if 'stac:collection' in signature[key].keys():
-                if not scatter_on is None:
-                    defaults[key] =  [{'class': 'Directory', 'path': os.path.dirname(signature[key]['stac:href'])}]
-                else:
-                    defaults[key] =  {'class': 'Directory', 'path': os.path.dirname(signature[key]['stac:href'])}
+            defaults[key] =  {'class': 'Directory', 'path': os.path.dirname(parameters[key]['stac:href'])}
 
-            else:
-                defaults[key] = signature[key]['value'].split(',')
-                
-        elif key in ['input_reference_stack']:
-             
-            if 'stac:collection' in signature[key].keys():
-                
-                defaults[key] =  {'class': 'Directory', 'path': os.path.dirname(signature[key]['stac:href'])}
+            if 'scatter' in parameters[key].keys():
 
-            else:
-                
-                defaults[key] = signature[key]['value'].split(',')
-        
+                if parameters[key]['scatter'] == 'True':
+
+                    defaults[key] = parameters[key]['stac:href'].split(',')
+
+
         else:
-            if 'stac:collection' in signature[key].keys():
 
-                defaults[key] =  {'class': 'Directory', 'path': os.path.dirname(signature[key]['stac:href'])}
+            if 'min_occurs' in parameters[key].keys():
+
+                defaults[key] = parameters[key]['value']
+
+            if 'max_occurs' in parameters[key].keys():
+
+                if parameters[key]['max_occurs'] == '1':
+
+                    defaults[key] = parameters[key]['value']
+
+                else:
+
+                    defaults[key] = parameters[key]['value'].split(',')
 
             else:
-                
-                if 'min_occurs' in signature[key].keys():
-                    
-                    defaults[key] = signature[key]['value']
-                    
-                if 'max_occurs' in signature[key].keys():
+                defaults[key] = parameters[key]['value']
 
-                    if signature[key]['max_occurs'] == '1':
-                        
-                        defaults[key] = signature[key]['value']
-                        
-                    else:
-                        
-                        defaults[key] = signature[key]['value'].split(',')
-                        
-                else:
-                    defaults[key] = signature[key]['value']
-                
     return defaults
     
     
-def cwl(signature, executable, docker=None, scatter_on=None, requirement=''):
+def cwl(signature, executable, docker=None, requirement=''):
     
     cwl = dict()
     cwl['cwlVersion'] = 'v1.0'
@@ -140,108 +123,44 @@ def cwl(signature, executable, docker=None, scatter_on=None, requirement=''):
     
     input_index = 1
 
-    for index, key in enumerate(list(signature.keys())):
-       
-        if key in ['service']:
-            
-            cwl_main['id'] = signature[key]['identifier']
-            cwl_main['label'] = signature[key]['title']
-            cwl_main['doc'] = signature[key]['abstract']
-            
-            continue
+    cwl_main['id'] = signature['_service']['identifier']
+    cwl_main['label'] = signature['_service']['title']
+    cwl_main['doc'] = signature['_service']['abstract']
+    
+    for index, key in enumerate(list(signature['_parameters'].keys())):
+           
+        if 'stac:collection' in signature['_parameters'][key].keys():
 
-        elif key == 'input_reference':
+            if 'scatter' in signature['_parameters'][key].keys():
+                if signature['_parameters'][key]['scatter'] == 'True':
+                    scatter_on = key
+                    scatter_input = 'inp{}'.format(input_index)
 
-            if 'stac:collection' in signature[key].keys():
-                
-                if scatter_on == key:
-                    param_type = 'Directory[]'
-                else:
-                    param_type = 'Directory'
-                    
-                main_inputs[key] = {'type': param_type,
-                                    'label': signature[key]['title'],
-                                    'doc': signature[key]['abstract'],
-                                    'stac:collection': signature[key]['stac:collection']}
-                
-                clt_inputs['inp{}'.format(input_index)] = {'type': 'Directory',
-                                                           'inputBinding': {'position': input_index,
-                                                                            'prefix': '--{}'.format(key)}
+            main_inputs[key] = {'type': signature['_parameters'][key]['type'],
+                                'label': signature['_parameters'][key]['title'],
+                                'doc': signature['_parameters'][key]['abstract'],
+                                'stac:collection': signature['_parameters'][key]['stac:collection']}
+
+
+            clt_inputs['inp{}'.format(input_index)] = {'type': 'Directory',
+                                                        'inputBinding': {'position': input_index,
+                                                                         'prefix': '--{}'.format(key)}
                                                        }
-                
-            else:
 
-                if 'data_path' in signature.keys():
-                    
-                    main_inputs[key] = {'type': 'string[]',
-                                        'label': signature[key]['title'],
-                                        'doc': signature[key]['abstract']}
-                                
-                
-                else:
-                    
-                    main_inputs[key] = {'type': 'Directory[]',
-                                        'label': signature[key]['title'],
-                                        'doc': signature[key]['abstract']}
-                                
+        else:
 
-                clt_inputs['inp{}'.format(input_index)] = {'type': 'string',
-                                                           'inputBinding': {'position': input_index,
-                                                                            'prefix': '--{}'.format(key)}
-                                                          }
+            input_type = get_param_type(signature['_parameters'][key])
 
-            step_inputs['inp{}'.format(input_index)] = key
-
-            if scatter_on == key:
-                scatter_input = 'inp{}'.format(input_index)
-
-        elif key == 'data_path':
-
-            main_inputs[key] = 'string'
+            main_inputs[key] = {'type': input_type,
+                                'label': signature['_parameters'][key]['title'],
+                                'doc': signature['_parameters'][key]['abstract']}
 
             clt_inputs['inp{}'.format(input_index)] = {'type': 'string',
-                                                       'default': '/workspace/data',
                                                        'inputBinding': {'position': input_index,
                                                                         'prefix': '--{}'.format(key)}
                                                       }
 
-            step_inputs['inp{}'.format(input_index)] = key
-       
-        else:
-            
-            if 'stac:collection' in signature[key].keys():
-                
-                if scatter_on == key:
-                    param_type = 'Directory[]'
-                else:
-                    param_type = 'Directory'
-                
-                
-                main_inputs[key] = {'type': param_type,
-                                    'label': signature[key]['title'],
-                                    'doc': signature[key]['abstract'],
-                                    'stac:collection': signature[key]['stac:collection']}
-                
-                
-                clt_inputs['inp{}'.format(input_index)] = {'type': 'Directory',
-                                                            'inputBinding': {'position': input_index,
-                                                                             'prefix': '--{}'.format(key)}
-                                                           }
-                
-            else:
-                
-                input_type = get_param_type(signature[key])
-
-                main_inputs[key] = {'type': input_type,
-                                    'label': signature[key]['title'],
-                                    'doc': signature[key]['abstract']}
-
-                clt_inputs['inp{}'.format(input_index)] = {'type': 'string',
-                                                           'inputBinding': {'position': input_index,
-                                                                            'prefix': '--{}'.format(key)}
-                                                          }
-
-            step_inputs['inp{}'.format(input_index)] = key
+        step_inputs['inp{}'.format(input_index)] = key
 
         input_index += 1
 
@@ -263,7 +182,9 @@ def cwl(signature, executable, docker=None, scatter_on=None, requirement=''):
 
         path = ':'.join([os.path.join(os.environ['PREFIX'], 'bin'), os.environ['PATH']])
 
-    clt_class['requirements'] = {'ResourceRequirement': dict(requirement),
+        
+    
+    clt_class['requirements'] = {'ResourceRequirement': signature['_requirements'] if '_requirements' in signature.keys() else {},
                                      'EnvVarRequirement' : {'envDef':
                                                             {'PATH' : path, 
                                                              'PREFIX': os.environ['PREFIX']}}}
@@ -318,9 +239,8 @@ def cwl(signature, executable, docker=None, scatter_on=None, requirement=''):
 @click.command()
 @click.option('--docker', '-d', default=None, help='docker image')
 @click.option('--requirement', '-r', type=(str, int), multiple=True, help='set the ResourceRequirement, e.g. ramMin, coresMin')
-@click.option('--scatter', default=None, help='Set the ScatterFeatureRequirement on the provided parameter')
 @click.option('--params', is_flag=True, default=False, help='flag to print the default parameters as YAML instead of the CWL')
-def main(docker, requirement, scatter, params):
+def main(docker, requirement, params):
 
     notebook_path = pkg_resources.resource_filename(__package__.split('.')[0], '{{cookiecutter.notebook}}')
     notebook_folder = pkg_resources.resource_filename(__package__.split('.')[0], 'notebook/')
@@ -328,8 +248,8 @@ def main(docker, requirement, scatter, params):
     signature = get_signature_notebook(notebook_path)
 
     if params:
-        yaml.dump(default_params(signature,
-                                scatter_on=scatter),
+        # TODO fix the default params
+        yaml.dump(default_params(signature),
                   sys.stdout,
                   default_flow_style=False)
     else:
@@ -337,8 +257,7 @@ def main(docker, requirement, scatter, params):
         yaml.dump(cwl(signature, 
                       os.path.basename(notebook_path).replace('.ipynb', ''),
                       docker=docker,
-                      scatter_on=scatter, 
-                     requirement=requirement), 
+                      requirement=requirement), 
                   sys.stdout, 
                   default_flow_style=False)
  

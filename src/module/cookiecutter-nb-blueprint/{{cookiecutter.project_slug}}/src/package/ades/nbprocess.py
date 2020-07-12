@@ -88,18 +88,6 @@ def process_notebook(nb_source, signature, nb_target='result.ipynb', kernel='env
 
                 continue
 
-            if len(names) == 1 and names[0] in ['base_dir', 'input_catalog', 'data_path']:
-
-                exec(str(cell['source'])) in globals(), locals()
-   
-                key = names[0]
-                  
-                value = signature[key]['value']
-
-                cell['source'] = '{} = \'{}\''.format(key, value) 
-                
-                logging.info('Setting {} to {}'.format(key, value))
-
             if len(names) == 2:
 
                 if 'dict' in names:
@@ -109,27 +97,24 @@ def process_notebook(nb_source, signature, nb_target='result.ipynb', kernel='env
 
                 key = names[0]
 
-                if not key in signature.keys():
+                if not key in signature['_parameters'].keys():
                     logging.info('key {} not in signature'.format(key))
-                    continue
-
-                if key == 'service':
                     continue
 
                 exec(str(cell['source'])) in globals(), locals()
 
                 key = names[0]
-                value = signature[key]['value']
+                value = signature['_parameters'][key]['value']
 
                 if len(set(['identifier', 'value', 'abstract']).intersection(set(locals()[key].keys()))) >= 3:
 
                     updated_source = '{} = dict()\n\n'.format(key)
 
-                    for dict_key in signature[key].keys():
+                    for dict_key in signature['_parameters'][key].keys():
 
                         updated_source = updated_source + '{}[\'{}\'] = \'{}\'\n'.format(key, 
                                                                                          dict_key,
-                                                                                         signature[key][dict_key])
+                                                                                         signature['_parameters'][key][dict_key])
 
                     logging.info('Setting {} to {}'.format(key, updated_source))
                     cell['source'] = updated_source

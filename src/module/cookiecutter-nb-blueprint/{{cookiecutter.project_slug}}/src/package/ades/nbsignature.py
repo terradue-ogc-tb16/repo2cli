@@ -41,7 +41,8 @@ def get_signature_notebook(nb_source):
     nb = nbf.read(nb_source, 4)
 
     signature = dict()
-
+    signature['_parameters'] = dict()
+    
     for index, cell in enumerate(nb['cells']):
         
         if str(cell['cell_type']) != 'code':
@@ -65,20 +66,6 @@ def get_signature_notebook(nb_source):
 
                     continue
 
-                if len(names) == 1 and names[0] in ['base_dir', 'input_catalog', 'data_path']:
-
-                    exec(str(cell['source'])) in globals(), locals()
-
-                    key = names[0]
-
-                    if isinstance(locals()[key], list):
-
-                        value = ','.join(locals()[key]) 
-                    else:
-                        value = locals()[key]
-             
-                    signature[key] = dict([('value', value)])
-
                 if len(names) == 2:
 
                     if len(set(names) & set(['dict', 'service'])) == 2:
@@ -86,21 +73,25 @@ def get_signature_notebook(nb_source):
                         # it's the service dictionary
                         exec(str(cell['source'])) in globals(), locals()
 
-                        signature['service'] = locals()['service']
+                        signature['_service'] = locals()['service']
+                        
+                    if len(set(names) & set(['dict', 'requirements'])) == 2:
+
+                        # it's the service dictionary
+                        exec(str(cell['source'])) in globals(), locals()
+
+                        signature['_requirements'] = locals()['requirements']
 
                     if len(set(names) & set(['dict', 'service'])) == 1:
+
                         exec(str(cell['source'])) in globals(), locals()
                         # it's a dict
                         names.remove('dict')
 
-                        key = names[0]
-                        value = locals()[names[0]]
+                        if len(set(['identifier', 'value', 'abstract']).intersection(set(locals()[names[0]].keys()))) == 3:
 
-                        if len(set(['identifier', 'value', 'abstract']).intersection(set(value.keys()))) == 3:
+                            signature['_parameters'][names[0]] = locals()[names[0]]
  
-                            signature[key] = value
-                     
-
             except SyntaxError:
                 continue
     
