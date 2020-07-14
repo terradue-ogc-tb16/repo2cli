@@ -33,12 +33,12 @@ signature = None
 def log_param_update(signature, key, param_value):
     
     # log some information but not all of it
-    if signature['_parameters'][key]['identifier'] == '_T2Username':
+    if signature['_parameters'][key]['id'] == '_T2Username':
         
         msg = 'Update parameter {} with value \'{}***\''.format(key, 
                                                                 param_value[0:3])
 
-    elif signature['_parameters'][key]['identifier'] == '_T2ApiKey':
+    elif signature['_parameters'][key]['id'] == '_T2ApiKey':
 
         msg = 'Update parameter {} with value \'{}***{}\''.format(key, 
                                                                   param_value[0:3],
@@ -92,11 +92,11 @@ def main():
     
     # get the notebook signature
     signature = get_signature_notebook(notebook_path)
-    
+
     # create the CLI 
     parser = ArgumentParser(formatter_class=Formatter, 
-                            description='{}\n{}'.format(signature['_service']['title'], 
-                                                        signature['_service']['abstract']))
+                            description='{}\n{}'.format(signature['_workflow']['label'], 
+                                                        signature['_workflow']['doc']))
 
     
     # add kernel as parameter
@@ -122,13 +122,13 @@ def main():
                         action='store_true',
                         dest='print_cwl',
                         default=False,
-                        help='Prints CWL script and exits')
+                        help='Prints the CWL script and exits')
     
     parser.add_argument('--params',
                         action='store_true',
                         dest='print_defaults',
                         default=False,
-                        help='Prints default parameters and exits')
+                        help='Prints the default parameters and exits')
     
     if not '_parameters' in signature.keys():
         raise ValueError()
@@ -136,22 +136,22 @@ def main():
     parameters = signature['_parameters']
     
     for key in parameters.keys():
-
-        if 'allowed_values' in parameters[key].keys():
+        
+        if parameters[key]['type'] == 'enum' and 'symbols' in parameters[key].keys():
             
             parser.add_argument('--{}'.format(key),
                                 action='store',
                                 dest=key,
                                 default=parameters[key]['value'],
-                                help=parameters[key]['abstract'],
-                                choices=parameters[key]['allowed_values'].split(','))
+                                help=parameters[key]['doc'],
+                                choices=parameters[key]['symbols'])
         else:
 
             parser.add_argument('--{}'.format(key),
                                 action='store',
                                 dest=key,
                                 default=parameters[key]['value'],
-                                help=parameters[key]['abstract'])
+                                help=parameters[key]['doc'])
 
     # parse the CLI
     args = parser.parse_args()

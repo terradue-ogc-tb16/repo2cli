@@ -105,7 +105,7 @@ def process_notebook(nb_source, signature, nb_target='result.ipynb', kernel='env
                 key = names[0]
                 value = signature['_parameters'][key]['value']
 
-                if len(set(['identifier', 'value', 'abstract']).intersection(set(locals()[key].keys()))) >= 3:
+                if len(set(['id', 'value', 'label']).intersection(set(locals()[key].keys()))) >= 3:
 
                     updated_source = '{} = dict()\n\n'.format(key)
 

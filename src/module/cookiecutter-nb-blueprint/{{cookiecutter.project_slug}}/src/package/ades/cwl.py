@@ -11,6 +11,10 @@ def get_param_type(param_signature):
     
     param_type = None
     
+    if 'type' in param_signature:
+        
+        return param_signature['type']
+    
     if not all(elem in list(param_signature) for elem in ['min_occurs', 'max_occurs']):
         
         # if not set, add the key and its default value
@@ -93,6 +97,8 @@ def default_params(signature, scatter_on=None):
     
 def cwl(signature, executable, docker=None):
     
+    scatter_on = None
+    
     cwl = dict()
     cwl['cwlVersion'] = 'v1.0'
         
@@ -120,9 +126,9 @@ def cwl(signature, executable, docker=None):
     
     input_index = 1
 
-    cwl_main['id'] = signature['_service']['identifier']
-    cwl_main['label'] = signature['_service']['title']
-    cwl_main['doc'] = signature['_service']['abstract']
+    cwl_main['id'] = signature['_workflow']['id']
+    cwl_main['label'] = signature['_workflow']['label']
+    cwl_main['doc'] = signature['_workflow']['doc']
     
     for index, key in enumerate(list(signature['_parameters'].keys())):
            
@@ -133,13 +139,22 @@ def cwl(signature, executable, docker=None):
                     scatter_on = key
                     scatter_input = 'inp{}'.format(input_index)
 
-            main_inputs[key] = {'type': signature['_parameters'][key]['type'],
-                                'label': signature['_parameters'][key]['title'],
-                                'doc': signature['_parameters'][key]['abstract'],
-                                'stac:collection': signature['_parameters'][key]['stac:collection']}
+                # the Workflow gets the type set in the notebook transformed as an array
+                main_inputs[key] = {'type': '{}[]'.format(signature['_parameters'][key]['type']),
+                                    'label': signature['_parameters'][key]['label'],
+                                    'doc': signature['_parameters'][key]['doc'],
+                                    'stac:collection': signature['_parameters'][key]['stac:collection']}
+                
+            else:
+                
+                # the Workflow gets the type set in the notebook transformed as an array
+                main_inputs[key] = {'type': signature['_parameters'][key]['type'],
+                                    'label': signature['_parameters'][key]['label'],
+                                    'doc': signature['_parameters'][key]['doc'],
+                                    'stac:collection': signature['_parameters'][key]['stac:collection']}
 
-
-            clt_inputs['inp{}'.format(input_index)] = {'type': 'Directory',
+            # the CommandLineTool gets the type set in the notebook
+            clt_inputs['inp{}'.format(input_index)] = {'type': signature['_parameters'][key]['type'],
                                                         'inputBinding': {'position': input_index,
                                                                          'prefix': '--{}'.format(key)}
                                                        }
@@ -147,12 +162,35 @@ def cwl(signature, executable, docker=None):
         else:
 
             input_type = get_param_type(signature['_parameters'][key])
+            
+            
 
-            main_inputs[key] = {'type': input_type,
-                                'label': signature['_parameters'][key]['title'],
-                                'doc': signature['_parameters'][key]['abstract']}
+            if input_type == 'enum' and 'symbols' in signature['_parameters'][key].keys():
+                
+                main_inputs[key] = {'type': {'type': input_type, 
+                                             'symbols': signature['_parameters'][key]['symbols']},
+                                    'label': signature['_parameters'][key]['label'],
+                                    'doc': signature['_parameters'][key]['doc']}
 
-            clt_inputs['inp{}'.format(input_index)] = {'type': 'string',
+            else:
+                
+                if 'scatter' in signature['_parameters'][key].keys():
+                    
+                    if signature['_parameters'][key]['scatter'] == 'True':
+                        scatter_on = key
+                        scatter_input = 'inp{}'.format(input_index)
+
+                    # the Workflow gets the type set in the notebook transformed as an array
+                    main_inputs[key] = {'type': '{}[]'.format(signature['_parameters'][key]['type']),
+                                        'label': signature['_parameters'][key]['label'],
+                                        'doc': signature['_parameters'][key]['doc']}
+                else:
+                    
+                    main_inputs[key] = {'type': input_type,
+                                        'label': signature['_parameters'][key]['label'],
+                                        'doc': signature['_parameters'][key]['doc']}
+
+            clt_inputs['inp{}'.format(input_index)] = {'type': input_type,
                                                        'inputBinding': {'position': input_index,
                                                                         'prefix': '--{}'.format(key)}
                                                       }
@@ -164,9 +202,8 @@ def cwl(signature, executable, docker=None):
 
     clt_class['inputs'] = clt_inputs
 
-    clt_class['outputs'] = {'results' : {'outputBinding': { 'glob': '.'},
-                                             'type': 'Any'                                       
-                                 }} # changed from Directory to Any
+    clt_class['outputs'] = {'results': {'outputBinding': { 'glob': '.'},
+                                        'type': 'Any'}} # changed from Directory to Any
 
     clt_class['stdout'] = 'std.out'
     clt_class['stderr'] = 'std.err'
@@ -182,9 +219,9 @@ def cwl(signature, executable, docker=None):
         
     
     clt_class['requirements'] = {'ResourceRequirement': signature['_requirements'] if '_requirements' in signature.keys() else {},
-                                     'EnvVarRequirement' : {'envDef':
-                                                            {'PATH' : path, 
-                                                             'PREFIX': os.environ['PREFIX']}}}
+                                 'EnvVarRequirement' : {'envDef':
+                                                        {'PATH' : path, 
+                                                         'PREFIX': os.environ['PREFIX']}}}
 
     cwl_main['inputs'] = main_inputs
 
