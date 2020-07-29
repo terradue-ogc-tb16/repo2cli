@@ -87,9 +87,6 @@ def main():
     # to clean
     to_clean = ['.{}'.format(f.replace(notebook_folder, '')) for f in glob.glob(os.path.join(notebook_folder, '*/'), recursive=True)]
 
-    logging.info('initial content: {}'.format(to_clean))
-    
-    
     # get the notebook signature
     signature = get_signature_notebook(notebook_path)
 
