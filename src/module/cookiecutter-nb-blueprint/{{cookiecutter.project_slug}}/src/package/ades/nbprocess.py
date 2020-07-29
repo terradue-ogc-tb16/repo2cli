@@ -75,10 +75,7 @@ def process_notebook(nb_source, signature, nb_target='result.ipynb', kernel='env
         try:
             root_ast = ast.parse(str(cell['source']))
         except SyntaxError:
-            if 'execution_count' in cell.keys():
-                logging.warning('Cell #{} (execution #{}) skipped'.format(index, cell['execution_count']))
-            else:
-                logging.warning('Cell #{} skipped'.format(index))
+
             continue
         
         if str(cell['cell_type']) == 'code':

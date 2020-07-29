@@ -147,7 +147,7 @@ def cwl(signature, executable, docker=None):
                 
             else:
                 
-                # the Workflow gets the type set in the notebook transformed as an array
+                # the Workflow gets the type set in the notebook 
                 main_inputs[key] = {'type': signature['_parameters'][key]['type'],
                                     'label': signature['_parameters'][key]['label'],
                                     'doc': signature['_parameters'][key]['doc'],

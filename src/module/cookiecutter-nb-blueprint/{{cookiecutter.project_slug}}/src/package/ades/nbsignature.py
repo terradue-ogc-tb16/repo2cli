@@ -24,10 +24,7 @@ def get_signature_notebook(nb_source):
         try:
             root_ast = ast.parse(str(cell['source']))
         except SyntaxError:
-            if 'execution_count' in cell.keys():
-                logging.warning('Cell #{} (execution #{}) skipped'.format(index, cell['execution_count']))
-            else:
-                logging.warning('Cell #{} skipped'.format(index))
+
             continue
 
         if str(cell['cell_type']) == 'code':
