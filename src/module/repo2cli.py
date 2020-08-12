@@ -8,7 +8,7 @@ import pkg_resources
 import logging
 import shutil
 from urllib.parse import urlparse
-
+from setuptools import find_packages
 #from .docker_lab import Lab
 #from .docker_prod import Prod
 
@@ -39,9 +39,7 @@ def run_command(command, **kwargs):
 @click.option('--debug', is_flag=True, default=False, help='Debug mode')
 def main(repo_url, branch, debug):
    
-    cookiecutter_folder = pkg_resources.resource_filename(__package__.split('.')[0],
-                                                          'cookiecutter-nb-blueprint/')
-
+    
 
     git_bin = 'git'
     docker_bin = 'docker'
@@ -58,7 +56,7 @@ def main(repo_url, branch, debug):
                                             urlparse(repo_url)[1], 
                                             urlparse(repo_url)[2])
     
-    res = run_command([git_bin, 'clone', '--branch', branch, repo_url, 'notebook'])
+    res = run_command([git_bin, 'clone', '--branch', branch, repo_url, 'repo'])
 
     logging.info('Exit code: {}'.format(res))
     
@@ -67,7 +65,7 @@ def main(repo_url, branch, debug):
         sys.exit(res)
     
     # todo check notebooks dict and env.yaml            
-    notebooks, conda_env_file, post_build_script = parse_repo_content('notebook') 
+    setup, notebooks, conda_env_file, post_build_script = parse_repo_content('repo') 
     
     logging.info('Found the environment.yml file')
     
@@ -83,14 +81,21 @@ def main(repo_url, branch, debug):
     logging.info('Updating conda dependencies')
     
     # todo in not prod, don't need lxml and pystac
-    conda_env_spec['dependencies'] = update_conda_deps(conda_env_spec['dependencies'],
-                                                       ['nbformat', 
-                                                        'nbconvert', 
-                                                        'pyyaml',
-                                                        'lxml', 
-                                                        'setuptools'])
+    if setup is None:
+        # notebook 
+        
+        cookiecutter_folder = pkg_resources.resource_filename(__package__.split('.')[0],
+                                                              'cookiecutter-nb-blueprint/')
+
+        
+        conda_env_spec['dependencies'] = update_conda_deps(conda_env_spec['dependencies'],
+                                                           ['nbformat', 
+                                                            'nbconvert', 
+                                                            'pyyaml',
+                                                            'lxml', 
+                                                            'setuptools'])
     
-    
+
     # create a local folder to put all the files for the docker image build
     check_folder('docker', True)
     
@@ -111,40 +116,91 @@ def main(repo_url, branch, debug):
     
     logging.info('Exit code: {}'.format(res))
     
-    # create kernel
-    logging.info('Creating the kernel')
-    
-    res = run_command('/opt/anaconda/envs/{0}/bin/python -m ipykernel install --name {0}'.format(conda_env_spec['name']).split(' '))
-    
-    logging.info('Exit code: {}'.format(res))
+    if setup is None:
+        # create kernel
+        logging.info('Creating the kernel')
+
+        res = run_command('/opt/anaconda/envs/{0}/bin/python -m ipykernel install --name {0}'.format(conda_env_spec['name']).split(' '))
+
+        logging.info('Exit code: {}'.format(res))
                       
                       
     root_wdir = os.getcwd()
     
-    for key, value in notebooks.items():
-
-        logging.info('Project template for notebook {}'.format(value))
-
-        data = dict()
-
-        data['project_slug'] = os.path.join('docker', key)
-        data['notebook'] = value
-        data['repo_url'] = repo_url
-        data['branch'] = branch
-        data['console_script'] = key
-        data['kernel'] = conda_env_spec['name']
-
-        check_folder(os.path.join('docker', key))
-
-        app_path = cookiecutter(template=cookiecutter_folder, 
-                                extra_context=data, 
-                                no_input=True)
-
-        logging.info('Project template created in: {}'.format(app_path))
-
-        os.chdir(os.path.join('docker', key))
+    
+    if setup is None:
         
-        logging.info('Current wdir: {}'.format(os.getcwd()))
+        for key, value in notebooks.items():
+
+            logging.info('Project template for notebook {}'.format(value))
+
+            data = dict()
+
+            data['project_slug'] = os.path.join('repo', key)
+            data['notebook'] = value
+            data['repo_url'] = repo_url
+            data['branch'] = branch
+            data['console_script'] = key
+            data['kernel'] = conda_env_spec['name']
+
+            check_folder(os.path.join('docker', key))
+
+            app_path = cookiecutter(template=cookiecutter_folder, 
+                                    extra_context=data, 
+                                    no_input=True)
+
+            logging.info('Project template created in: {}'.format(app_path))
+
+            os.chdir(os.path.join('repo', key))
+
+            logging.info('Current wdir: {}'.format(os.getcwd()))
+
+            if debug: 
+                res = run_command(['/opt/anaconda/envs/{}/bin/python'.format(conda_env_spec['name']),
+                                   'setup.py',
+                                   'install'])
+            else:
+                res = run_command(['/opt/anaconda/envs/{}/bin/python'.format(conda_env_spec['name']),
+                                   'setup.py',
+                                   '--quiet',
+                                   'install'])
+
+
+            os.chdir(root_wdir)
+
+            logging.info('Exit code: {}'.format(res))
+
+        if post_build_script is not None:
+
+            logging.info('Found the postBuild file')
+            import stat
+            os.chmod(post_build_script, (stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH))
+
+            res = run_command([post_build_script])
+
+            logging.info('Exit code: {}'.format(res))
+            #shutil.copyfile(self.post_build_script, os.path.join('docker', os.path.basename(self.post_build_script)))
+
+        if not debug:
+            for folder in ['notebook', 'repo']:
+                shutil.rmtree(folder)
+                
+    else:
+        
+        logging.info('Project template')
+        
+        pkg = find_packages(os.path.join('repo', 'src'))
+        
+        logging.info('Project module {}'.format(pkg))
+        
+        
+        
+        shutil.copytree(os.path.join(pkg_resources.resource_filename(__package__.split('.')[0],
+                                                                     'assets-prj-blueprint'),
+                                     'ades'), 
+                        os.path.join('repo', 'src', pkg[0], 'ades'))
+        
+        os.chdir('repo')
         
         if debug: 
             res = run_command(['/opt/anaconda/envs/{}/bin/python'.format(conda_env_spec['name']),
@@ -155,26 +211,21 @@ def main(repo_url, branch, debug):
                                'setup.py',
                                '--quiet',
                                'install'])
-        
-        
+            
+            
+        logging.info('Exit code: {}'.format(res))
+
         os.chdir(root_wdir)
         
-        logging.info('Exit code: {}'.format(res))
-        
-    if post_build_script is not None:
+        if post_build_script is not None:
 
-        logging.info('Found the postBuild file')
-        import stat
-        os.chmod(post_build_script, (stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH))
+            logging.info('Found the postBuild file')
+            import stat
+            os.chmod(post_build_script, (stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH))
+
+            res = run_command([post_build_script])
+
+            logging.info('Exit code: {}'.format(res))
         
-        res = run_command([post_build_script])
-        
-        logging.info('Exit code: {}'.format(res))
-        #shutil.copyfile(self.post_build_script, os.path.join('docker', os.path.basename(self.post_build_script)))
-            
-    if not debug:
-        for folder in ['notebook', 'docker']:
-            shutil.rmtree(folder)
-    
 if __name__ == "__main__":
     main()

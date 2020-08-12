@@ -6,6 +6,7 @@ def parse_repo_content(folder):
     
     post_build_script = None
     conda_env_file = None
+    setup = None
     
     notebooks = dict()
 
@@ -25,8 +26,12 @@ def parse_repo_content(folder):
             if fnmatch.fnmatch(name, 'postBuild'):
                 
                 post_build_script = os.path.join(root, name)
+            
+            if fnmatch.fnmatch(name, 'setup.py'):
                 
-    return notebooks, conda_env_file, post_build_script
+                setup = os.path.join(root, name)
+                
+    return setup, notebooks, conda_env_file, post_build_script
 
 
 def update_conda_deps(current, extend):

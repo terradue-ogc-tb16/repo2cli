@@ -18,11 +18,12 @@ def package_files(where):
     
     return paths
 
-extra_files = package_files(['src/module/cookiecutter-nb-blueprint'])
+extra_files = package_files(['src/module/cookiecutter-nb-blueprint', 
+                             'src/module/assets-prj-blueprint'])
 
 
 setup(entry_points=console_scripts,
-      packages=find_packages(where='src', exclude=['cookiecutter-nb-*']),
+      packages=find_packages(where='src', exclude=['cookiecutter-nb-*', 'assets-prj-*']),
       package_dir={'': 'src'},
       package_data = {'': extra_files})
 
