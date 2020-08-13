@@ -200,6 +200,11 @@ def main(repo_url, branch, debug):
                                      'ades'), 
                         os.path.join('repo', 'src', pkg[0], 'ades'))
         
+        shutil.copy(os.path.join(pkg_resources.resource_filename(__package__.split('.')[0],
+                                                                     'assets-prj-blueprint'),
+                                'setup.py'),
+                    os.path.join('repo'))
+                    
         os.chdir('repo')
         
         if debug: 
