@@ -102,7 +102,7 @@ def default_params(signature, scatter_on=None):
 
 
 @click.command()
-@click.option('--docker', '-d', default='no image provided', help='docker image')
+@click.option('--docker', '-d', default=None, help='docker image')
 @click.option('--requirement', '-r', type=(str, int), multiple=True, help='set the ResourceRequirement, e.g. ramMin, coresMin')
 @click.option('--scatter', is_flag=True, default=False, help='flag to set the ScatterFeatureRequirement on the input_catalog parameter')
 @click.option('--params', is_flag=True, default=False, help='flag to print the default parameters as YAML instead of the CWL')
@@ -161,6 +161,7 @@ def main(docker, requirement, scatter, params):
                 main_inputs[key] = {'type': '{}[]'.format(signature['_parameters'][key]['type']),
                                     'label': signature['_parameters'][key]['label'],
                                     'doc': signature['_parameters'][key]['doc'],
+                                    'stac:catalog': 'catalog.json',
                                     'stac:collection': signature['_parameters'][key]['stac:collection']}
                 
             else:
@@ -169,6 +170,7 @@ def main(docker, requirement, scatter, params):
                 main_inputs[key] = {'type': signature['_parameters'][key]['type'],
                                     'label': signature['_parameters'][key]['label'],
                                     'doc': signature['_parameters'][key]['doc'],
+                                    'stac:catalog': 'catalog.json',
                                     'stac:collection': signature['_parameters'][key]['stac:collection']}
 
             # the CommandLineTool gets the type set in the notebook

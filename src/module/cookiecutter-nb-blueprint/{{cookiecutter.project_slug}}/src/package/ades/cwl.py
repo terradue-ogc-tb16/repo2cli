@@ -143,6 +143,7 @@ def cwl(signature, executable, docker=None):
                 main_inputs[key] = {'type': '{}[]'.format(signature['_parameters'][key]['type']),
                                     'label': signature['_parameters'][key]['label'],
                                     'doc': signature['_parameters'][key]['doc'],
+                                    'stac:catalog': 'catalog.json',
                                     'stac:collection': signature['_parameters'][key]['stac:collection']}
                 
             else:
@@ -151,6 +152,7 @@ def cwl(signature, executable, docker=None):
                 main_inputs[key] = {'type': signature['_parameters'][key]['type'],
                                     'label': signature['_parameters'][key]['label'],
                                     'doc': signature['_parameters'][key]['doc'],
+                                    'stac:catalog': 'catalog.json',
                                     'stac:collection': signature['_parameters'][key]['stac:collection']}
 
             # the CommandLineTool gets the type set in the notebook
