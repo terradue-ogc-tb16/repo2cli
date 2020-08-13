@@ -228,9 +228,9 @@ def main(repo_url, branch, debug):
             import stat
             os.chmod(post_build_script, (stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH))
 
-            res = run_command([post_build_script])
+            #res = run_command([post_build_script])
 
-            logging.info('Exit code: {}'.format(res))
+            #logging.info('Exit code: {}'.format(res))
         
 if __name__ == "__main__":
     main()
