@@ -34,14 +34,21 @@ def parse_repo_content(folder):
     return setup, notebooks, conda_env_file, post_build_script
 
 
-def update_conda_deps(current, extend):
+def update_conda_deps(current, setup):
     
-    for dep in extend:
-
-        if not dep in current:
-            
-            current.append(dep)
-    
+    if setup is None:
+        
+        current.extend(['nbformat', 
+                        'nbconvert', 
+                        'pyyaml',
+                        'lxml', 
+                        'setuptools'])
+        
+    else:
+        
+        current.extend(['click', 
+                        'pyyaml'])
+       
     return current
 
 

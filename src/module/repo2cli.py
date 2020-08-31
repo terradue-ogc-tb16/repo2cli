@@ -67,7 +67,9 @@ def main(repo_url, branch, debug):
     # todo check notebooks dict and env.yaml            
     setup, notebooks, conda_env_file, post_build_script = parse_repo_content('repo') 
     
-    logging.info('Found the environment.yml file')
+    if conda_env_file is None:
+        raise Exception('environment.yml file not found')
+        sys.exit(1)
     
     if post_build_script is not None:
         logging.info('Found the postBuild file')
@@ -80,27 +82,10 @@ def main(repo_url, branch, debug):
     
     logging.info('Updating conda dependencies')
     
-    # todo in not prod, don't need lxml and pystac
-    if setup is None:
-        # notebook 
-        
-        cookiecutter_folder = pkg_resources.resource_filename(__package__.split('.')[0],
-                                                              'cookiecutter-nb-blueprint/')
-
-        
-        conda_env_spec['dependencies'] = update_conda_deps(conda_env_spec['dependencies'],
-                                                           ['nbformat', 
-                                                            'nbconvert', 
-                                                            'pyyaml',
-                                                            'lxml', 
-                                                            'setuptools'])
     
-    else:
-        # ades file need a few more modules
-        conda_env_spec['dependencies'] = update_conda_deps(conda_env_spec['dependencies'],
-                                                           ['click', 
-                                                            'pyyaml'])
-
+    conda_env_spec['dependencies'] = update_conda_deps(conda_env_spec['dependencies'], 
+                                                           setup)
+        
     # create a local folder to put all the files for the docker image build
     check_folder('docker', True)
     
@@ -120,20 +105,20 @@ def main(repo_url, branch, debug):
     os.environ['PREFIX'] = '/opt/anaconda/envs/{}'.format(conda_env_spec['name'])
     
     logging.info('Exit code: {}'.format(res))
+                      
+    root_wdir = os.getcwd()
     
     if setup is None:
-        # create kernel
+        
         logging.info('Creating the kernel')
 
         res = run_command('/opt/anaconda/envs/{0}/bin/python -m ipykernel install --name {0}'.format(conda_env_spec['name']).split(' '))
 
         logging.info('Exit code: {}'.format(res))
                       
-                      
-    root_wdir = os.getcwd()
-    
-    
-    if setup is None:
+        
+        cookiecutter_folder = pkg_resources.resource_filename(__package__.split('.')[0],
+                                                              'cookiecutter-nb-blueprint/')
         
         for key, value in notebooks.items():
 
@@ -197,9 +182,7 @@ def main(repo_url, branch, debug):
         pkg = find_packages(os.path.join('repo', 'src'))
         
         logging.info('Project module {}'.format(pkg))
-        
-        
-        
+
         shutil.copytree(os.path.join(pkg_resources.resource_filename(__package__.split('.')[0],
                                                                      'assets-prj-blueprint'),
                                      'ades'), 

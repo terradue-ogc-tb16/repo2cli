@@ -283,7 +283,7 @@ def main(docker, requirement, scatter, params):
 
 
     if params:
-        yaml.dump(defaults, sys.stdout, default_flow_style=False)
+        yaml.dump(default_params(signature), sys.stdout, default_flow_style=False)
     else:
         yaml.dump(cwl, sys.stdout, default_flow_style=False)
  
