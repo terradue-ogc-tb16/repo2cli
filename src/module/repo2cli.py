@@ -39,12 +39,13 @@ def run_command(command, **kwargs):
 @click.option('--debug', is_flag=True, default=False, help='Debug mode')
 def main(repo_url, branch, debug):
    
-    
-
     git_bin = 'git'
     docker_bin = 'docker'
     
     check_folder('notebook')
+    
+    
+    check_folder('repo')
     
     logging.info('Clone {}'.format(repo_url))
     

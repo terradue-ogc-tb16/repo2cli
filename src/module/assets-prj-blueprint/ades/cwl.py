@@ -104,11 +104,14 @@ def default_params(signature, scatter_on=None):
 @click.command()
 @click.option('--docker', '-d', default=None, help='docker image')
 @click.option('--requirement', '-r', type=(str, int), multiple=True, help='set the ResourceRequirement, e.g. ramMin, coresMin')
-@click.option('--scatter', is_flag=True, default=False, help='flag to set the ScatterFeatureRequirement on the input_catalog parameter')
 @click.option('--params', is_flag=True, default=False, help='flag to print the default parameters as YAML instead of the CWL')
-def main(docker, requirement, scatter, params):
+@click.option('--prefix', default=None, help='Sets the path to the conda environment (PREFIX)')
+def main(docker, requirement, params, prefix=None):
         
+    if prefix is not None:
     
+        os.environ['PREFIX'] = prefix
+        
     mod = importlib.import_module(__package__)
     
     # read main() signature
