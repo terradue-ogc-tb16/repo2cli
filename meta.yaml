@@ -1,9 +1,8 @@
 {% set name = "repo2cli" %}
-{% set version = "0.0.5" %}
 
 package:
   name: '{{ name|lower }}'
-  version: '{{ version }}'
+  version: ''{{ load_setup_py_data().version }}'
 
 source:
      path: .
