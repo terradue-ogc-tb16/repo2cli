@@ -34,39 +34,49 @@ def run_command(command, **kwargs):
     return rc
 
 @click.command()
-@click.option('--repo-url', '-r', 'repo_url', help='git URL e.g. https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/eo-processing-hotspot.git')
+@click.argument('path')
+@click.option('--repo-url', '-r', 'repo_url', help='git URL e.g. https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/eo-processing-hotspot.git', default=None)
 @click.option('--branch', '-b', help='git branch', default='master')
 @click.option('--debug', is_flag=True, default=False, help='Debug mode')
-def main(repo_url, branch, debug):
-   
-    git_bin = 'git'
-    docker_bin = 'docker'
+def main(path, repo_url, branch, debug):
+
+    local_path = 'repo'
     
     check_folder('notebook')
-    
-    
-    check_folder('repo')
-    
-    logging.info('Clone {}'.format(repo_url))
-    
-    if 'GIT_USERNAME' in os.environ:
-        
-        repo_url = '{}://{}:{}@{}{}'.format(urlparse(repo_url)[0],
-                                            os.environ['GIT_USERNAME'], 
-                                            os.environ['GIT_TOKEN'],
-                                            urlparse(repo_url)[1], 
-                                            urlparse(repo_url)[2])
-    
-    res = run_command([git_bin, 'clone', '--branch', branch, repo_url, 'repo'])
 
-    logging.info('Exit code: {}'.format(res))
+    check_folder(local_path)
+        
+    if repo_url is not None: 
+
+        git_bin = 'git'
+        #docker_bin = 'docker'
+
+        
+
+        logging.info('Clone {}'.format(repo_url))
+
+        if 'GIT_USERNAME' in os.environ:
+
+            repo_url = '{}://{}:{}@{}{}'.format(urlparse(repo_url)[0],
+                                                os.environ['GIT_USERNAME'], 
+                                                os.environ['GIT_TOKEN'],
+                                                urlparse(repo_url)[1], 
+                                                urlparse(repo_url)[2])
+
+        res = run_command([git_bin, 'clone', '--branch', branch, repo_url, local_path])
+
+        logging.info('Exit code: {}'.format(res))
+
+        if res != 0:
+            raise Exception('Git clone step failed')
+            sys.exit(res)
     
-    if res != 0:
-        raise Exception('Git clone step failed')
-        sys.exit(res)
+    else:
+        
+        shutil.copytree(path, local_path)
     
     # todo check notebooks dict and env.yaml            
-    setup, notebooks, conda_env_file, post_build_script = parse_repo_content('repo') 
+    setup, notebooks, conda_env_file, post_build_script = parse_repo_content(local_path) 
     
     if conda_env_file is None:
         raise Exception('environment.yml file not found')
@@ -88,10 +98,10 @@ def main(repo_url, branch, debug):
                                                            setup)
         
     # create a local folder to put all the files for the docker image build
-    check_folder('docker', True)
+    #check_folder('docker', True)
     
     # copy the environment.yml 
-    with open(os.path.join('docker', 'environment.yml'), 'w') as file:
+    with open(os.path.join(local_path, 'environment.yml'), 'w') as file:
     
         yaml.dump(conda_env_spec, 
                   file, 
@@ -101,7 +111,7 @@ def main(repo_url, branch, debug):
     # /opt/anaconda/bin/conda env create --file ${{HOME}}/environment.yml
     logging.info('Creating the conda environment')
     
-    res = run_command(['/opt/anaconda/bin/conda', 'env', 'create', '--file', os.path.join('docker', 'environment.yml')])
+    res = run_command(['/opt/anaconda/bin/conda', 'env', 'create', '--file', os.path.join(local_path, 'environment.yml')])
     
     os.environ['PREFIX'] = '/opt/anaconda/envs/{}'.format(conda_env_spec['name'])
     
@@ -127,7 +137,7 @@ def main(repo_url, branch, debug):
 
             data = dict()
 
-            data['project_slug'] = os.path.join('repo', key)
+            data['project_slug'] = os.path.join(local_path, key)
             data['notebook'] = value
             data['repo_url'] = repo_url
             data['branch'] = branch
@@ -173,28 +183,28 @@ def main(repo_url, branch, debug):
             #shutil.copyfile(self.post_build_script, os.path.join('docker', os.path.basename(self.post_build_script)))
 
         if not debug:
-            for folder in ['notebook', 'repo']:
+            for folder in ['notebook', local_path]:
                 shutil.rmtree(folder)
                 
     else:
         
         logging.info('Project template')
         
-        pkg = find_packages(os.path.join('repo', 'src'))
+        pkg = find_packages(os.path.join(local_path, 'src'))
         
         logging.info('Project module {}'.format(pkg))
 
         shutil.copytree(os.path.join(pkg_resources.resource_filename(__package__.split('.')[0],
                                                                      'assets-prj-blueprint'),
                                      'ades'), 
-                        os.path.join('repo', 'src', pkg[0], 'ades'))
+                        os.path.join(local_path, 'src', pkg[0], 'ades'))
         
         shutil.copy(os.path.join(pkg_resources.resource_filename(__package__.split('.')[0],
                                                                      'assets-prj-blueprint'),
                                 'setup.py'),
-                    os.path.join('repo'))
+                    os.path.join(local_path))
                     
-        os.chdir('repo')
+        os.chdir(local_path)
         
         if debug: 
             res = run_command(['/opt/anaconda/envs/{}/bin/python'.format(conda_env_spec['name']),
@@ -222,7 +232,7 @@ def main(repo_url, branch, debug):
             logging.info('Exit code: {}'.format(res))
             
         if not debug:
-            for folder in ['repo']:
+            for folder in [local_path]:
                 shutil.rmtree(folder)
         
 if __name__ == "__main__":
