@@ -139,7 +139,7 @@ def main(path, repo_url, branch, debug):
 
             data['project_slug'] = os.path.join(local_path, key)
             data['notebook'] = value
-            data['repo_url'] = repo_url
+            data['repo_url'] = repo_url if repo_url is not None else local_path
             data['branch'] = branch
             data['console_script'] = key
             data['kernel'] = conda_env_spec['name']
