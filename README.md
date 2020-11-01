@@ -1,5 +1,7 @@
 # repo2cli - Notebook repository to a command-line utility backed by the Common Workflow Language (CWL) 
 
+[![Build Status](https://travis-ci.com/terradue-ogc-tb16/repo2cli.svg?branch=develop)](https://travis-ci.com/terradue-ogc-tb16/repo2cli)
+
 `repo2cli` is a command line utility that converts a git repository with a notebook to a CLI utility.
 
 The steps performed are:
