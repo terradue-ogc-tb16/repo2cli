@@ -81,7 +81,7 @@ def main():
     # use package resources to access the notebook 
     # and any.py file in the egg notebook folder
     notebook_path = pkg_resources.resource_filename(__package__.split('.')[0], '{{cookiecutter.notebook}}')
-    notebook_folder = pkg_resources.resource_filename(__package__.split('.')[0], 'notebook/')
+    notebook_folder = pkg_resources.resource_filename(__package__.split('.')[0], 'repo/')
     
     
     # to clean
@@ -154,6 +154,9 @@ def main():
     args = parser.parse_args()
     
     if args.print_cwl:
+        
+        
+        
         
         yaml.dump(cwl(signature, 
                       os.path.basename(notebook_path).replace('.ipynb', ''),

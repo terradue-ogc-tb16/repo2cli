@@ -22,7 +22,7 @@ def package_files(where):
 
 
 
-extra_files = package_files(['src/package/notebook'])
+extra_files = package_files(['src/package/repo'])
 
 setup(entry_points=console_scripts,
       packages=find_packages(where='src'),
