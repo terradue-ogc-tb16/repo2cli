@@ -141,19 +141,21 @@ These git repositories contain examples that can be converted to a CLI using `re
 
 See the individual READMEs for further details
 
-https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/vegetation-index.git
+https://github.com/terradue-ogc-tb16/vegetation-index.git
 
-https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/vegetation-index-ref.git
+https://github.com/terradue-ogc-tb16/vegetation-index-ref.git
 
-https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/burned-area.git
+https://github.com/terradue-ogc-tb16/burned-area.git
 
-https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/burned-area-ref.git
+https://github.com/terradue-ogc-tb16/burned-area-ref.git
 
 ## Installation
 
 ### Using conda
 
-
+```console
+conda install -c terradue repo2cli
+```
 
 ### Development version
 
