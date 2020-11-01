@@ -18,9 +18,17 @@ class Workflow():
         if self.is_scatter():
             
             self.scatter_param = self.get_scatter_input()
+            
+            self._wf_class['outputs'] = [{'id': 'wf_outputs',
+                                      'outputSource': ['node_1/results'],
+                                      'type': {'type': 'array',
+                                         'items': 'Directory'}}]
         
         else:
-            
+
+            self._wf_class['outputs'] = [{'id': 'wf_outputs',
+                                      'outputSource': ['node_1/results'],
+                                      'type':  'Directory'}]
             self.scatter_param = None
             
         self._wf_class['inputs'] = None
@@ -77,7 +85,15 @@ class Workflow():
                                             'run': '#clt'
                                       }
                             }
-
+            
+        else:
+            
+            self._wf_class['steps'] = {'node_1': 
+                                       {'in': step_inputs,
+                                        'out': ['results'],
+                                        'run': '#clt'
+                                       }
+                                      } 
         
     def to_dict(self):
         
