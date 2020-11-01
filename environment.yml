@@ -1,0 +1,9 @@
+name: env_repo2cli
+channels:
+  - terradue
+  - conda-forge
+dependencies:
+  - cookiecutter
+  - pyyaml
+  - click
+  - setuptools

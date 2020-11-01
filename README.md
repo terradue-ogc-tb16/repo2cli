@@ -148,3 +148,47 @@ https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/vegetation-index-ref.gi
 https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/burned-area.git
 
 https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/burned-area-ref.git
+
+## Installation
+
+### Using conda
+
+
+
+### Development version
+
+Clone this repository.
+
+Create the conda environment with:
+
+```console
+conda env create -f environment.yml 
+```
+
+Activate the created environment.
+
+Install the `repo2cli` utility with:
+
+```python
+python setup.py install 
+```
+
+Test the installation:
+
+```console
+repo2cli --help
+```
+
+This returns:
+
+```
+Usage: repo2cli [OPTIONS]
+
+Options:
+  -r, --repo-url TEXT  git URL e.g. https://gitlab.com/terradue-
+                       ogctb16/eoap/d169-jupyter-nb/eo-processing-hotspot.git
+
+  -b, --branch TEXT    git branch
+  --debug              Debug mode
+  --help               Show this message and exit.
+```
