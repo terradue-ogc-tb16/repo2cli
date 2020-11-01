@@ -9,7 +9,7 @@ class AnInput():
         self._index = index
         
         self.input_signature = self._signature['_parameters'][self._key]
-        
+        self.input_default_value = self.input_signature['value']      
         self.input_type = self.get_param_type()
         
     def get_param_type(self):
@@ -105,3 +105,5 @@ class AnInput():
     def get_clt_input(self):
         
         return self.parse_input()[1]
+    
+    

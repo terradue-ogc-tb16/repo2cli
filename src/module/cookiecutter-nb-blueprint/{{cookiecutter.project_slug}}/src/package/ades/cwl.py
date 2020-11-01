@@ -35,6 +35,20 @@ def cwl(signature, executable, docker=None):
     
     return cwl
 
+def get_input_value(the_input):
+    
+    if the_input.get_param_type() == 'Directory':
+        
+        return {'class': 'Directory', 'path': the_input.input_default_value} 
+
+    elif the_input.get_param_type() == 'File':
+        
+        return {'class': 'File', 'path': the_input.input_default_value} 
+    
+    else: 
+        
+        return the_input.input_default_value
+    
 def default_params(signature, scatter_on=None):
     
     # TODO check the scatter
@@ -48,24 +62,37 @@ def default_params(signature, scatter_on=None):
 
     parameters = signature['_parameters']
     
-    for key in parameters.keys():
-
-
+    for index, key in enumerate(parameters.keys()):
+        
+        an_input = AnInput(signature, key, index)
+         
         if 'min_occurs' in parameters[key].keys():
 
-            defaults[key] = parameters[key]['value']
+            defaults[key] = get_input_value(an_input)
 
         if 'max_occurs' in parameters[key].keys():
 
             if parameters[key]['max_occurs'] == '1':
 
-                defaults[key] = parameters[key]['value']
+                defaults[key] = get_input_value(an_input)
 
             else:
-
-                defaults[key] = parameters[key]['value'].split(',')
-
+                
+                if 'inp{}'.format(index+1) == scatter_input:
+                    defaults[key] = [get_input_value(an_input)]
+                    
+                else:
+                    
+                    defaults[key] = get_input_value(an_input)
+                    
         else:
-            defaults[key] = parameters[key]['value']
+            
+            if 'inp{}'.format(index+1) == scatter_input:
+                
+                defaults[key] = [get_input_value(an_input)]
+                
+            else:
+                
+                defaults[key] = get_input_value(an_input)
 
     return defaults
