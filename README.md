@@ -91,7 +91,7 @@ workflow = dict([('label', 'Normalized burn ratio'),
 ## Example
 
 ```console
-$ repo2cli -r https://gitlab.com/terradue-ogctb16/eoap/d169-jupyter-nb/vegetation-index.git 
+$ repo2cli -r https://github.com/terradue-ogc-tb16/vegetation-index.git 
 ```
 
 `repo2cli` created:
