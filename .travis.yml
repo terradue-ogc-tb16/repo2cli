@@ -30,10 +30,10 @@ after_success:
   - PACKAGENAME=repo2cli
   - conda install -y anaconda-client
   - export ANACONDA_API_TOKEN=$CONDA_UPLOAD_TOKEN
-  - test $TRAVIS_BRANCH = "master" && CHANNEL='main' || CHANNEL='dev'
-  - echo $CHANNEL
-  - anaconda upload --user terradue --channel $CHANNEL bld-dir/**/$PACKAGENAME-*.tar.bz2
-
+  - if [[ $TRAVIS_BRANCH == "master" ]]; then
+       CHANNEL='main' 
+       anaconda upload --user terradue --channel $CHANNEL bld-dir/**/$PACKAGENAME-*.tar.bz2
+    fi
 
 ## Only upload builds from tags
 #    if [[ $TRAVIS_PULL_REQUEST == false && $TRAVIS_REPO_SLUG == "org/pkgname"
