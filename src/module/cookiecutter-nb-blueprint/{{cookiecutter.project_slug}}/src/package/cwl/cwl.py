@@ -23,7 +23,7 @@ def cwl(signature, executable, docker=None):
     
     clt = CommandLineTool(signature, 
                           executable, 
-                          docker=None)
+                          docker=docker)
     
     clt.set_inputs(clt_inputs)
     
