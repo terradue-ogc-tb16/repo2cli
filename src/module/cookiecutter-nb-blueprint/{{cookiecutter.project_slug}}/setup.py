@@ -4,8 +4,8 @@ import os
 
 console_scripts = """
 [console_scripts]
-{{cookiecutter.console_script}}={0}.ades.cli:main
-{{cookiecutter.console_script}}-cwl={0}.ades.cwl:main""".format(find_packages('src')[0])
+{{cookiecutter.console_script}}={0}.cwl.cli:main
+{{cookiecutter.console_script}}-cwl={0}.cwl.cwl:main""".format(find_packages('src')[0])
 
 def package_files(where):
     paths = []
@@ -22,7 +22,7 @@ def package_files(where):
 
 
 
-extra_files = package_files(['src/package/notebook'])
+extra_files = package_files(['src/package/repo'])
 
 setup(entry_points=console_scripts,
       packages=find_packages(where='src'),

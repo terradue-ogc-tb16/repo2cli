@@ -1,0 +1,43 @@
+language: python
+
+matrix:
+  # This will launch a separate build for each Python version you add
+  # Feel free to add extra environment variables as needed
+  include:
+    - python: 3.8
+
+before_install:
+  # Install the latest version of Miniconda
+  - export MINIFORGE_VERSION=4.8.2-1
+  - wget https://github.com/conda-forge/miniforge/releases/download/${MINIFORGE_VERSION}/Miniforge3-${MINIFORGE_VERSION}-Linux-x86_64.sh -O /tmp/miniforge-installer.sh
+  - chmod +x /tmp/miniforge-installer.sh
+  - bash /tmp/miniforge-installer.sh -b -p /home/travis/conda
+  - export PATH=/home/travis/conda/bin:$PATH
+  - conda update --yes conda  # Update CONDA without command line prompt
+  - . /home/travis/conda/etc/profile.d/conda.sh
+  
+install:
+  - export CONDA_PREFIX=/home/travis/conda
+  - conda install -y conda-build
+  - conda config --add channels conda-forge
+  - /home/travis/conda/bin/conda-build -q . --python=$TRAVIS_PYTHON_VERSION --output-folder bld-dir
+
+script:
+  - echo
+
+after_success:
+  # Install the command line API for CONDA uploads
+  - PACKAGENAME=repo2cli
+  - conda install -y anaconda-client
+  - export ANACONDA_API_TOKEN=$CONDA_UPLOAD_TOKEN
+  - test $TRAVIS_BRANCH = "master" && CHANNEL='main' || CHANNEL='dev'
+  - echo $CHANNEL
+  - anaconda upload --user terradue --channel $CHANNEL bld-dir/**/$PACKAGENAME-*.tar.bz2
+
+
+## Only upload builds from tags
+#    if [[ $TRAVIS_PULL_REQUEST == false && $TRAVIS_REPO_SLUG == "org/pkgname"
+#          && $TRAVIS_BRANCH == $TRAVIS_TAG  && $TRAVIS_TAG != '' ]]; then
+#      export ANACONDA_API_TOKEN=$CONDA_UPLOAD_TOKEN
+#      anaconda upload bld-dir/**/PACKAGENAME-*.tar.bz2
+#    fi

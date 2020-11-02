@@ -20,7 +20,7 @@ def main():
         clone_to_dir = 'src/package'
 
         subprocess.check_output(
-                    [repo_type, 'clone', '--branch', branch, repo_url, 'notebook'],
+                    [repo_type, 'clone', '--branch', branch, repo_url, 'repo'],
                     cwd=clone_to_dir,
                     stderr=subprocess.STDOUT)
 
