@@ -30,7 +30,8 @@ after_success:
   - PACKAGENAME=repo2cli
   - conda install -y anaconda-client
   - export ANACONDA_API_TOKEN=$CONDA_UPLOAD_TOKEN
-  - test $TRAVIS_BRANCH = "master" && CHANNEL='main' || channel='dev'
+  - test $TRAVIS_BRANCH = "master" && CHANNEL='main' || CHANNEL='dev'
+  - echo $CHANNEL
   - anaconda upload --user terradue --channel $CHANNEL bld-dir/**/$PACKAGENAME-*.tar.bz2
 
 
